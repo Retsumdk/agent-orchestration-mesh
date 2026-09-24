@@ -1,51 +1,16 @@
-#!/usr/bin/env bun
-/**
- * agent-orchestration-mesh - Service mesh for AI agents providing discovery, load balancing, and secure mTLS communication
- * Built with Zo Computer by The BookMaster
- */
-
-import { Command } from "commander";
-import { existsSync, readFileSync } from "fs";
-import { join } from "path";
-
-interface Config {
-  apiKey?: string;
-  baseUrl: string;
-  timeout: number;
-  retries: number;
-}
-
-const DEFAULTS: Config = {
-  baseUrl: "https://api.example.com",
-  timeout: 30000,
-  retries: 3,
-};
-
-function loadConfig(): Config {
-  const cfgPath = join(process.cwd(), "config.json");
-  if (existsSync(cfgPath)) {
-    try {
-      return { ...DEFAULTS, ...JSON.parse(readFileSync(cfgPath, "utf-8")) };
-    } catch { /* ignore */ }
-  }
-  return { ...DEFAULTS };
-}
-
-async function main(cfg: Config) {
-  console.log(`[${name}] Connected to ${cfg.baseUrl}`);
-  console.log(`[${name}] Timeout: ${cfg.timeout}ms | Retries: ${cfg.retries}`);
-  // TODO: implement your logic here
-  console.log(`[${name}] Done.`);
-}
-
-const program = new Command();
-program.name("agent-orchestration-mesh").description("Service mesh for AI agents providing discovery, load balancing, and secure mTLS communication").version("1.0.0")
-  .option("-c, --config <path>", "Config file path", "config.json")
-  .option("-v, --verbose", "Verbose mode")
-  .action(async (opts) => {
-    const cfg = loadConfig();
-    if (opts.verbose) console.log("Verbose mode on");
-    try { await main(cfg); }
-    catch (e) { console.error(`Error: ${e}`); process.exit(1); }
-  });
-program.parse(process.argv);
+import { Mesh } from "./mesh.js";
+import { ServiceRegistry } from "./registry.js";
+import { LoadBalancer, isStrategyName } from "./loadbalancer.js";
+import { CircuitBreaker } from "./circuitbreaker.js";
+import { MeshClient } from "./client.js";
+import { MeshServer } from "./server.js";
+import { generateIdentityKeyPair, fingerprintOf, assertValidIdentity, type AgentIdentityKeyPair } from "./security/identity.js";
+import { SecureChannel, createHandshakeOffer, createHandshakeReply } from "./security/channel.js";
+import * as errors from "./errors.js";
+export { Mesh, ServiceRegistry, LoadBalancer, CircuitBreaker, MeshClient, MeshServer };
+export { isStrategyName };
+export { generateIdentityKeyPair, fingerprintOf, assertValidIdentity, type AgentIdentityKeyPair };
+export { SecureChannel, createHandshakeOffer, createHandshakeReply };
+export { MeshError } from "./errors.js";
+export { errors };
+export * from "./types.js";
